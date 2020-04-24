@@ -5,16 +5,18 @@ resource "aws_vpc" "vpc" {
 }
 
 resource "aws_subnet" "public_subnets" {
-    for_each = var.subnet_definitions
+    for_each = var.public_subnets
     vpc_id = aws_vpc.vpc.id
-    cidr_block = var.subnet_definitions[each.key]["public"]
+    cidr_block = each.value
+    availability_zone = each.key
     tags = var.tags
 }
 
 resource "aws_subnet" "private_subnets" {
-    for_each = var.subnet_definitions
+    for_each = var.private_subnets
     vpc_id = aws_vpc.vpc.id
-    cidr_block = var.subnet_definitions[each.key]["private"]
+    cidr_block = each.value
+    availability_zone = each.key
     tags = var.tags
 }
 

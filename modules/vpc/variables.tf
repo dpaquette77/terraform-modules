@@ -9,12 +9,17 @@ variable "tags" {
     description = "tags to attach to the vpc"
 }
 
-variable "subnet_definitions" {
-    type = map(map(string))
-    description = "map of map that contains the AZ as the first key and private or public as the secondary key"
+variable "private_subnets" {
+    type = map(string)
+    description = "map of AZ to private subnet cidr"
 }
 
-variable "create_nat_gatways" {
+variable "public_subnets" {
+    type = map(string)
+    description = "map of AZ to public subnet cidr"
+}
+
+variable "create_nat_gateways" {
     type = bool
     description = "flag to control whether we create 1 NAT gateways for each private subnet"
     default = true
