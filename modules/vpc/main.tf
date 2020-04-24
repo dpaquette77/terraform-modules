@@ -57,7 +57,9 @@ resource "aws_route_table_association" "private_route_associations" {
 
 resource "aws_network_acl" "public_nacl" {
     vpc_id = aws_vpc.vpc.id
-    tags = var.tags
+    tags = {
+        Name = "public_nacl"
+    }
     subnet_ids = [for sn in aws_subnet.public_subnets : sn.id]
 }
 
@@ -81,7 +83,9 @@ resource "aws_network_acl_rule" "public_allow_all_out" {
 
 resource "aws_network_acl" "private_nacl" {
     vpc_id = aws_vpc.vpc.id
-    tags = var.tags
+    tags = {
+        Name = "private_nacl"
+    }
     subnet_ids = [for sn in aws_subnet.private_subnets : sn.id]
 }
 
@@ -95,7 +99,7 @@ resource "aws_network_acl_rule" "private_allow_all_in" {
 }
 
 resource "aws_network_acl_rule" "private_allow_all_out" {
-    network_acl_id = aws_network_acl.public_nacl.id
+    network_acl_id = aws_network_acl.private_nacl.id
     rule_number = 100
     egress = true
     protocol = "-1"
