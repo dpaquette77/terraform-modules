@@ -10,6 +10,7 @@ resource "aws_subnet" "public_subnets" {
     cidr_block = each.value
     availability_zone = each.key
     tags = var.tags
+    map_public_ip_on_launch = true
 }
 
 resource "aws_subnet" "private_subnets" {
@@ -34,20 +35,25 @@ resource "aws_route" "to_internet_route" {
     route_table_id = aws_route_table.public_route_table.id
     destination_cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
-    # TODO - tags ?
 } 
 
 resource "aws_route_table_association" "public_route_associations" {
     for_each = aws_subnet.public_subnets
     subnet_id = each.value.id
     route_table_id = aws_route_table.public_route_table.id
-    # TODO - tags ?
 }
 
 resource "aws_route_table" "private_route_table" {
     vpc_id = aws_vpc.vpc.id
     tags = var.tags
 }
+
+resource "aws_route" "private_subnet_to_internet_route" {
+    count = var.create_nat_gateways ? 1 : 0
+    route_table_id = aws_route_table.private_route_table.id
+    destination_cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat_gateway.id
+} 
 
 resource "aws_route_table_association" "private_route_associations" {
     for_each = aws_subnet.private_subnets
