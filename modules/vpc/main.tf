@@ -44,21 +44,22 @@ resource "aws_route_table_association" "public_route_associations" {
 }
 
 resource "aws_route_table" "private_route_table" {
+    for_each = aws_subnet.private_subnets
     vpc_id = aws_vpc.vpc.id
     tags = var.tags
 }
 
 resource "aws_route" "private_subnet_to_internet_route" {
-    count = var.create_nat_gateways ? 1 : 0
-    route_table_id = aws_route_table.private_route_table.id
+    for_each = toset(aws_nat_gateway.nat_gateways)
+    route_table_id = aws_route_table.private_route_table[each.value.subnet_id]
     destination_cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat_gateway.id
+    gateway_id = each.value.id
 } 
 
 resource "aws_route_table_association" "private_route_associations" {
     for_each = aws_subnet.private_subnets
     subnet_id = each.value.id
-    route_table_id = aws_route_table.private_route_table.id
+    route_table_id = aws_route_table.private_route_table[each.value.availability_zone].id
 }
 
 resource "aws_network_acl" "public_nacl" {
@@ -114,14 +115,14 @@ resource "aws_network_acl_rule" "private_allow_all_out" {
 }
 
 resource "aws_eip" "nat_gateway_eips" {
-    for_each = aws_subnet.private_subnets
+    count = var.create_nat_gateways ? length(aws_subnet.private_subnets) : 0
     vpc = true
     tags = var.tags
 }
 
 resource "aws_nat_gateway" "nat_gateways" {
-    for_each = aws_eip.nat_gateway_eips
-    subnet_id = aws_subnet.private_subnets[each.key].id
-    allocation_id = each.value.id
+    count = var.create_nat_gateways ? length(aws_subnet.private_subnets) : 0
+    subnet_id = aws_subnet.private_subnets[count.index].id
+    allocation_id = aws_eip.nat_gateway_eips[count.index].id
     tags = var.tags
 }
